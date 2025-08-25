@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HDSP Pack Pro V1.5</title>
+  <style>
+   :root{
+  --bg:#0a0f17;        /* fundo mais sóbrio */
+  --fg:#e5e7eb;        /* texto principal */
+  --muted:#9aa4b2;     /* texto secundário */
+  --acc:#2dd4bf;       /* acento teal elegante */
+  --card:#0f172a;      /* cards mais escuros (slate-900) */
+  --border:#1f2937;    /* borda discreta */
+}
+header .note{
+  margin-left: 400px; font-size: 16px; color: var(--muted);
+  vertical-align: middle; opacity:.95
+}
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; background:var(--bg); color:var(--fg); }
+    header { padding:20px 24px; border-bottom:1px solid var(--border); background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0)); }
+    h1 { margin:0; font-size:22px; }
+    main { max-width:1100px; margin:0 auto; padding:24px; }
+    .grid { display:grid; gap:16px; grid-template-columns: repeat(12, 1fr); }
+    .col-6 { grid-column: span 6; }
+    .col-12 { grid-column: span 12; }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.25); }
+    .card h2 { margin:0 0 12px; font-size:18px; }
+    label { display:block; font-size:13px; color:var(--muted); margin-bottom:6px; }
+    input[type="number"], select, input[type="text"], textarea { width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:#0f1730; color:var(--fg); }
+    .btn { cursor:pointer; border:none; border-radius:12px; padding:10px 14px; background:var(--acc); color:#021127; font-weight:700; }
+    .btn.ghost { background:#1f2a52; color:var(--fg); }
+    .row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+    .list { max-height:220px; overflow:auto; border:1px solid var(--border); border-radius:12px; padding:10px; background:#0f1730; font-size:12px; }
+    .stats { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:12px; margin-top:10px; }
+    .stat { background:#0f1730; border:1px solid var(--border); border-radius:12px; padding:10px; font-size:13px; color:var(--muted); }
+    .stat strong { display:block; font-size:16px; color:var(--fg); }
+    .bar { height:10px; background:#0f1730; border:1px solid var(--border); border-radius:999px; overflow:hidden; }
+    .bar > div { height:100%; width:0%; background:linear-gradient(90deg, #6aa6ff, #9de1ff); }
+    pre { white-space: pre-wrap; background:#0f1730; border:1px solid var(--border); border-radius:12px; padding:12px; font-size:12px; }
+    .downloads a { display:inline-block; margin:6px 6px 0 0; padding:8px 10px; background:#1e2747; border:1px solid var(--border); border-radius:10px; color:var(--fg); text-decoration:none; font-size:13px; }
+    .pill { font-size:11px; padding:4px 8px; border:1px solid var(--border); border-radius:999px; background:#0f1730; color:var(--muted); }
+    small { color:var(--muted); }
+
+   /* Segmented control (modo de saída) — destaque premium */
+.seg-wrap { display:flex; gap:10px; flex-wrap:wrap; }
+.seg {
+  display:inline-flex; align-items:center; cursor:pointer; user-select:none;
+  padding:10px 14px; border-radius:14px;
+  background:#0f1730; border:1px solid var(--border);
+  box-shadow: 0 6px 18px rgba(0,0,0,.25);
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+}
+.seg:hover{ transform: translateY(-1px); box-shadow:0 10px 24px rgba(0,0,0,.28); }
+.seg input{ display:none; }
+.seg span{ font-size:14px; font-weight:600; color:var(--muted); letter-spacing:.2px; }
+
+.seg input:checked + span{
+  color:#0b1220;
+  background: linear-gradient(135deg,#67e8f9 0%, #34d399 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+
+.seg:has(input:checked){
+  border-color: #2dd4bf;
+  box-shadow: 0 8px 26px rgba(45,212,191,.22), inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+    .muted { color:var(--muted); font-size:12px; }
+    .dim { opacity:.6; pointer-events:none; filter:saturate(.7); }
+  </style>
+
+  <!-- PDF e DOCX -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script> if (window['pdfjsLib']) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js'; </script>
+  <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>HDSP Pack Pro V1.5</h1>
+	<span class="note"><b>Dica Importante galera:</b> no Chrome/Edge, se vocês clicarem em Baixar Todos, ele pergunta qual pasta vocês desejam salvar. (Humberto) </span>
+  </header>
+
+  <main>
+    <div class="grid">
+
+      <!-- CONFIG -->
+      <section class="card col-6">
+       <h2>Configuração</h2>
+
+<!-- 1) Modo de saída -->
+<label class="muted"></label>
+<div class="seg-wrap" style="margin-bottom:8px">
+  <label class="seg"><input type="radio" name="outmode" id="modeIndividual" checked><span>Converter para TXT (1:1)</span></label>
+  <label class="seg"><input type="radio" name="outmode" id="modePacks"><span>Gerar PACKS</span></label>
+</div>
+<small class="muted"></small>
+
+<!-- 2) Opções gerais -->
+<div class="row" style="margin-top:12px">
+  <label><input id="stripHtml" type="checkbox" /> Remover tags HTML de arquivos .html</label>
+  <label><input id="preserveOrder" type="checkbox" checked /> Preservar ordem por nome</label>
+  <label><input id="optimizeMd" type="checkbox" /> Otimizar para IA (Markdown + metadados)</label>
+</div>
+
+<!-- 3) Opções para PACKS -->
+<div style="margin-top:12px">
+  <label class="muted"></label>
+  <div class="row">
+    <div style="flex:1; min-width:220px">
+      <label for="packs">Número de packs</label>
+      <input id="packs" type="number" min="1" max="40" value="1" list="packsList" />
+      <datalist id="packsList"></datalist>
+    </div>
+    <div style="flex:1; min-width:180px">
+      <label for="ext">Extensão de saída</label>
+      <select id="ext">
+        <option value="txt" selected>.txt</option>
+        <option value="md">.md</option>
+      </select>
+    </div>
+  </div>
+
+  <div style="margin-top:10px">
+    <label for="sepPreset">Separador entre documentos</label>
+    <div class="row">
+      <select id="sepPreset" style="flex:1; min-width:220px">
+        <option value="blank2" selected>2 linhas em branco (padrão)</option>
+        <option value="dash">Linha horizontal (---)</option>
+        <option value="hash">## FIM DO DOCUMENTO ##</option>
+        <option value="none">Nenhum separador</option>
+      </select>
+      <input id="sepCustom" type="text" placeholder="Personalizado (se preencher, substitui o selecionado)" style="flex:2; min-width:260px" />
+    </div>
+    <small class="muted"></small>
+  </div>
+</div>
+
+<!-- 4) Ações e Progresso -->
+<div class="row" style="margin-top:14px">
+  <button id="btnProcess" class="btn">Gerar</button>
+  <button id="btnReset" class="btn ghost">Limpar</button>
+</div>
+<div style="margin-top:12px">
+  <div class="bar"><div id="progress"></div></div>
+  <div id="status" class="pill" style="margin-top:6px">Aguardando seleção…</div>
+</div>
+      </section>
+	  
+	        <!-- ARQUIVOS -->
+      <section class="card col-6">
+        <h2>Arquivos</h2>
+        <div class="row">
+          <button id="btnPickFiles" class="btn">Selecionar arquivos</button>
+          <button id="btnPickFolder" class="btn ghost">Selecionar pasta</button>
+          <span class="pill">Suporta: .txt .md .csv .json .log .html .htm .pdf .docx</span>
+        </div>
+        <input id="fileInputFiles" type="file" multiple style="display:none" accept=".txt,.md,.csv,.json,.log,.html,.htm,.pdf,.docx,.doc" />
+        <input id="fileInputDir" type="file" multiple style="display:none" webkitdirectory directory accept=".txt,.md,.csv,.json,.log,.html,.htm,.pdf,.docx,.doc" />
+        <div id="fileList" class="list" style="margin-top:12px"></div>
+        <div class="stats">
+          <div class="stat"><span>Total de arquivos</span><strong id="statFiles">0</strong></div>
+          <div class="stat"><span>Tamanho total (MB)</span><strong id="statSize">0</strong></div>
+          <div class="stat"><span>Caracteres (aprox.)</span><strong id="statChars">0</strong></div>
+          <div class="stat"><span>Tokens (≈ chars/4)</span><strong id="statTokens">0</strong></div>
+        </div>
+      </section>
+
+      <section class="card col-12">
+        <h2>Downloads</h2>
+        <div class="row" style="margin: 0 0 8px 0">
+          <button id="btnDownloadAll" class="btn ghost" disabled>Baixar todos</button>
+        </div>
+        <div id="downloads" class="downloads"></div>
+      </section>
+
+      <section class="card col-12">
+        <h2>Pré-visualização do primeiro resultado</h2>
+        <pre id="preview">(vazio)</pre>
+      </section>
+    </div>
+  </main>
+
+  <script>
+  const els = {
+  btnPickFiles: document.getElementById('btnPickFiles'),
+  btnPickFolder: document.getElementById('btnPickFolder'),
+  fileInputFiles: document.getElementById('fileInputFiles'),
+  fileInputDir: document.getElementById('fileInputDir'),
+  fileList: document.getElementById('fileList'),
+  statFiles: document.getElementById('statFiles'),
+  statSize: document.getElementById('statSize'),
+  statChars: document.getElementById('statChars'),
+  statTokens: document.getElementById('statTokens'),
+  packs: document.getElementById('packs'),
+  ext: document.getElementById('ext'),
+  stripHtml: document.getElementById('stripHtml'),
+  preserveOrder: document.getElementById('preserveOrder'),
+  sepPreset: document.getElementById('sepPreset'),
+  sepCustom: document.getElementById('sepCustom'),
+  optimizeMd: document.getElementById('optimizeMd'),
+  btnProcess: document.getElementById('btnProcess'),
+  btnReset: document.getElementById('btnReset'),
+  progress: document.getElementById('progress'),
+  status: document.getElementById('status'),
+  downloads: document.getElementById('downloads'),
+  preview: document.getElementById('preview'),
+  btnDownloadAll: document.getElementById('btnDownloadAll'),
+  modePacks: document.getElementById('modePacks'),
+  modeIndividual: document.getElementById('modeIndividual'),
+};
+
+  (function fillPacksDatalist(){
+    const dl = document.getElementById('packsList');
+    for(let i=1;i<=40;i++){
+      const opt = document.createElement('option');
+      opt.value = String(i);
+      dl.appendChild(opt);
+    }
+  })();
+
+  let selectedFiles = [];
+  let generatedPacksData = [];
+  const ALLOWED_EXT = ['.txt','.md','.csv','.json','.log','.html','.htm','.pdf','.docx','.doc'];
+
+  function fmtMB(bytes){ return (bytes/1024/1024).toFixed(2); }
+  function approxTokens(chars){ return Math.round(chars/4); }
+  function baseName(fileName){ const i = fileName.lastIndexOf('.'); return i>0 ? fileName.slice(0,i) : fileName; }
+  function hasAllowedExt(name){ const lower = name.toLowerCase(); return ALLOWED_EXT.some(ext => lower.endsWith(ext)); }
+
+  // ===== Preservar quebras de linha ao extrair texto de HTML =====
+  function htmlToTextPreserveBreaks(html){
+    const doc = new DOMParser().parseFromString(html || '', 'text/html');
+    const body = doc.body || doc.createElement('body');
+
+    // <br> -> \n
+    body.querySelectorAll('br').forEach(br => br.replaceWith(doc.createTextNode('\n')));
+
+    // Elementos de bloco recebem quebras antes/depois
+    const blockSel = 'p,div,li,section,article,header,footer,pre,blockquote,hr,h1,h2,h3,h4,h5,h6,table,tr,ul,ol,dd,dt,figure,figcaption';
+    body.querySelectorAll(blockSel).forEach(el=>{
+      el.insertAdjacentText('beforebegin','\n');
+      el.insertAdjacentText('afterend','\n');
+    });
+
+    let text = body.textContent || '';
+
+    // Normaliza \r\n -> \n
+    text = text.replace(/\r\n?/g, '\n');
+
+    // Reduz excesso de linhas em branco consecutivas para no máx. 2
+    text = text.replace(/\n{3,}/g, '\n\n');
+
+    // NÃO dar trim global
+    return text.replace(/[ \t]+\n/g, '\n').replace(/[ \t]+$/,'');
+  }
+
+  // ===== Utilitários para o modo Otimizar para IA =====
+  function slugify(s){
+    return (s || '')
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g,'')    // remove diacríticos
+      .replace(/[^a-zA-Z0-9]+/g,'-')     // não-alfanumérico -> hífen
+      .replace(/^-+|-+$/g,'')            // bordas
+      .toLowerCase();
+  }
+
+  function detectTagsFromName(name){
+    const tags = [];
+    const n = (name || '').toLowerCase();
+    if(n.includes('ngfiscal')) tags.push('NGFiscal');
+    if(n.includes('ngcontabil')) tags.push('NGContabil');
+    if(n.includes('ngfolha') || n.includes('hcm')) tags.push('HCM');
+    if(n.includes('keevocenter') || n.includes('keevo center')) tags.push('KeevoCenter');
+    return tags.length ? tags : ['documento'];
+  }
+
+  function addFrontMatter({docId, title, source, tags}){
+    const created = new Date().toISOString().slice(0,10);
+    const yaml =
+`---
+doc_id: "${docId}"
+title: "${title}"
+source: "${source}"
+created_at: "${created}"
+tags: [${tags.map(t=>`"${t}"`).join(', ')}]
+---
+
+`;
+    return yaml;
+  }
+
+  function promoteSectionHeadings(raw){
+    const SECTION_HINTS = [
+      'introdução','quando utilizar','quando usar','como utilizar','como usar',
+      'passo a passo','procedimento','processo','campos','parâmetros','parametros',
+      'observações','observacoes','requisitos','perguntas e respostas','faq','exemplos',
+      'conferência','conferencia','relatórios','relatorios','erros comuns','solução de problemas'
+    ];
+    const lines = raw.split('\n');
+    return lines.map((line) => {
+      const trimmed = line.trim();
+
+      if (!trimmed || /^#{1,6}\s/.test(trimmed) || /^(-|\*|\•|\d+\.)\s/.test(trimmed) || trimmed.length > 80) {
+        return line;
+      }
+
+      const lower = trimmed.toLowerCase();
+      if (SECTION_HINTS.includes(lower)) {
+        return (line.startsWith('## ') ? line : `## ${trimmed}`);
+      }
+
+      if (/:$/.test(trimmed) && trimmed.length <= 60) {
+        const noColon = trimmed.replace(/:$/,'');
+        return (line.startsWith('## ') ? line : `## ${noColon}`);
+      }
+
+      return line;
+    }).join('\n');
+  }
+
+  function normalizeBullets(raw){
+    return raw
+      .replace(/^\s*[•\*]\s+/gm, '- ')
+      .replace(/^\s*-\s{2,}/gm, '- ');
+  }
+
+  function ensureLf(raw){ return raw.replace(/\r\n?/g, '\n'); }
+  function enforceMaxBlankLines(raw){ return raw.replace(/\n{3,}/g, '\n\n'); }
+
+  // Ordenação natural com prefixos numéricos
+  function splitNumericPrefix(n){
+    const base = n.replace(/^.*[\\/]/,'');
+    const m = base.match(/^\s*(\d+(?:\.\d+)*)(?=\s|[-_.])/);
+    if(!m) return null;
+    return m[1].split('.').map(v=>parseInt(v,10));
+  }
+  function cmpByVersionedName(aName, bName){
+    const aNums = splitNumericPrefix(aName);
+    const bNums = splitNumericPrefix(bName);
+    if(aNums && bNums){
+      const len = Math.max(aNums.length, bNums.length);
+      for(let i=0;i<len;i++){
+        const av = (i < aNums.length) ? aNums[i] : 0;
+        const bv = (i < bNums.length) ? bNums[i] : 0;
+        if(av !== bv) return av - bv;
+      }
+      return aName.localeCompare(bName, undefined, {sensitivity:'base', numeric:true});
+    }
+    if(aNums) return -1;
+    if(bNums) return 1;
+    return aName.localeCompare(bName, undefined, {sensitivity:'base', numeric:true});
+  }
+
+  // ========= UI base =========
+  els.btnPickFiles.addEventListener('click', ()=> els.fileInputFiles.click());
+  els.btnPickFolder.addEventListener('click', ()=> els.fileInputDir.click());
+  els.fileInputFiles.addEventListener('change', handleSelection);
+  els.fileInputDir.addEventListener('change', handleSelection);
+
+  function handleSelection(){
+    const files = Array.from(this.files || []);
+    const filtered = files.filter(f => hasAllowedExt(f.name));
+    selectedFiles = mergeFileLists(selectedFiles, filtered);
+    renderFileList();
+  }
+  function mergeFileLists(prev, add){
+    const map = new Map();
+    for(const f of prev){ map.set((f.webkitRelativePath||f.name)+':'+f.size, f); }
+    for(const f of add){ map.set((f.webkitRelativePath||f.name)+':'+f.size, f); }
+    return Array.from(map.values());
+  }
+  function renderFileList(){
+    els.fileList.innerHTML = '';
+    if(!selectedFiles.length){
+      els.statFiles.textContent = '0'; els.statSize.textContent = '0'; els.statChars.textContent = '0'; els.statTokens.textContent = '0';
+      els.status.textContent = 'Aguardando seleção…';
+      return;
+    }
+    let totalSize = 0;
+    const ul = document.createElement('ul'); ul.style.listStyle = 'none'; ul.style.padding = 0; ul.style.margin = 0;
+    selectedFiles.sort((a,b)=> cmpByVersionedName(a.name, b.name));
+    selectedFiles.forEach((f,idx)=>{ totalSize += f.size; if(idx<300){ const li=document.createElement('li'); li.textContent=(f.webkitRelativePath||f.name); ul.appendChild(li);} });
+    if(selectedFiles.length>300){ const li=document.createElement('li'); li.textContent=`… (+${selectedFiles.length-300} mais)`; ul.appendChild(li);}    
+    els.fileList.appendChild(ul);
+    els.statFiles.textContent = String(selectedFiles.length);
+    els.statSize.textContent = fmtMB(totalSize);
+    els.statChars.textContent = '—';
+    els.statTokens.textContent = '—';
+    els.status.textContent = 'Pronto para processar';
+  }
+
+  // ========= Extractors =========
+  async function extractPdfText(file){
+    const arrayBuffer = await file.arrayBuffer();
+    if(!window.pdfjsLib){ throw new Error('PDF.js não carregado'); }
+    const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+    let text = '';
+    for(let p=1; p<=pdf.numPages; p++){
+      const page = await pdf.getPage(p);
+      const tc = await page.getTextContent();
+      const pageText = tc.items.map(i => (i.str || '')).join(' ');
+      text += pageText + '\n\n';
+    }
+    return text;
+  }
+  async function extractDocxText(file){
+    const arrayBuffer = await file.arrayBuffer();
+    if(!window.mammoth){ throw new Error('Mammoth (DOCX) não carregado'); }
+    const result = await window.mammoth.convertToHtml({arrayBuffer});
+    const html = result.value || '';
+    return htmlToTextPreserveBreaks(html);
+  }
+  async function readFileAsText(file){
+    const lower = file.name.toLowerCase();
+    if(lower.endsWith('.pdf')){ return await extractPdfText(file); }
+    if(lower.endsWith('.docx')){ return await extractDocxText(file); }
+    if(lower.endsWith('.doc')){ throw new Error('Arquivo .DOC não suportado no navegador: '+file.name+' — converta para .DOCX/.PDF/.TXT.'); }
+
+    const raw = await file.text();
+
+    if(/\.(html?|HTML?)$/.test(file.name)){
+      if(els.stripHtml.checked){
+        return htmlToTextPreserveBreaks(raw);
+      } else {
+        return raw;
+      }
+    }
+    return raw; // TXT/MD/CSV/JSON/LOG
+  }
+
+  // ========= Helpers =========
+  function getSeparator(){
+    const custom = (els.sepCustom.value || '').trim();
+    if(custom) return decodeEscapes(custom);
+    switch(els.sepPreset.value){
+      case 'dash': return '\n\n---\n\n';
+      case 'hash': return '\n\n## FIM DO DOCUMENTO ##\n\n';
+      case 'none': return '\n';
+      case 'blank2':
+      default: return '\n\n';
+    }
+  }
+  function decodeEscapes(s){ return s.replace(/\\n/g, '\n').replace(/\\t/g, '\t').replace(/\\r/g, '\r'); }
+  function assignDocsToPacksSequential(docs, k){
+    const lengths = docs.map(d=>d.len);
+    const total = lengths.reduce((a,b)=>a+b,0);
+    const target = Math.ceil(total / k);
+    const packs = Array.from({length:k}, () => ({docs:[], len:0}));
+    let idx = 0;
+    for(const d of docs){
+      if(idx < k-1 && (packs[idx].len + d.len) > target){ idx++; }
+      packs[idx].docs.push(d);
+      packs[idx].len += d.len;
+    }
+    return packs;
+  }
+  function download(filename, text){
+    const blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.style.display='none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 500);
+  }
+  function createDownloadLink(fname, text){
+    const a = document.createElement('a');
+    a.href = '#';
+    a.textContent = fname;
+    a.addEventListener('click', (ev)=>{ ev.preventDefault(); download(fname, text); });
+    els.downloads.appendChild(a);
+    generatedPacksData.push({ fname, text });
+  }
+
+  // ========= “Baixar todos” & Reset =========
+ els.btnDownloadAll.addEventListener('click', async () => {
+  if(!generatedPacksData.length){ alert('Nada para baixar.'); return; }
+
+  els.btnDownloadAll.disabled = true;
+  const originalText = els.btnDownloadAll.textContent;
+
+  try {
+    if ('showDirectoryPicker' in window) {
+      // Chrome/Edge: escolher pasta e salvar arquivos diretamente
+      els.btnDownloadAll.textContent = 'Escolhendo pasta…';
+      const dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+
+      els.btnDownloadAll.textContent = 'Salvando na pasta…';
+      for (const p of generatedPacksData) {
+        const fileHandle = await dirHandle.getFileHandle(p.fname, { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(p.text);
+        await writable.close();
+      }
+      alert('Arquivos salvos com sucesso na pasta escolhida.');
+    } else {
+      // Outros navegadores: baixa todos via downloads tradicionais
+      els.btnDownloadAll.textContent = 'Baixando todos…';
+      for (const p of generatedPacksData) {
+        download(p.fname, p.text);
+        await new Promise(r=>setTimeout(r, 120));
+      }
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Não foi possível salvar/baixar: ' + (err.message || err));
+  } finally {
+    els.btnDownloadAll.disabled = false;
+    els.btnDownloadAll.textContent = originalText;
+  }
+});
+
+  els.btnReset.addEventListener('click', ()=>{
+    els.fileInputFiles.value = '';
+    els.fileInputDir.value = '';
+    selectedFiles = [];
+    generatedPacksData = [];
+    els.downloads.innerHTML = '';
+    els.preview.textContent = '(vazio)';
+    els.progress.style.width = '0%';
+    els.btnDownloadAll.disabled = true;
+    renderFileList();
+  });
+
+  // ========= Modo de saída: habilitar/desabilitar campos =========
+  function syncModeUI(){
+    const individual = els.modeIndividual.checked;
+    // packs-only
+    els.packs.disabled    = individual;
+    els.sepPreset.disabled= individual;
+    els.sepCustom.disabled= individual;
+    // extensão: no modo individual, forçamos .txt
+    els.ext.disabled      = individual;
+    if (individual) { els.ext.value = 'txt'; }
+    // cosmetics
+    [els.packs, els.sepPreset, els.sepCustom, els.ext].forEach(el=>{
+      el.closest('div')?.classList.toggle('dim', individual && (el===els.packs || el===els.sepPreset || el===els.sepCustom));
+    });
+  }
+  els.modePacks.addEventListener('change', syncModeUI);
+  els.modeIndividual.addEventListener('change', syncModeUI);
+  syncModeUI();
+
+  // ========= PROCESSAR =========
+  els.btnProcess.addEventListener('click', async () => {
+    if(!selectedFiles.length){ alert('Selecione arquivos ou uma pasta.'); return; }
+    const individual = els.modeIndividual.checked;
+    const k = Math.max(1, Math.min(40, parseInt(els.packs.value,10) || 1));
+
+    els.status.textContent = 'Lendo arquivos…';
+    els.progress.style.width = '3%';
+    generatedPacksData = [];
+
+    const docs = [];
+    let processed = 0, charTotal = 0, errors=[];
+
+    for(const file of selectedFiles){
+      try{
+        let contentRaw = await readFileAsText(file);
+
+        // SEM trim global — preserva quebras/ espaços originais
+        let content = contentRaw || '';
+        content = ensureLf(content);
+        content = enforceMaxBlankLines(content);
+
+        const base = baseName(file.name);
+        const title = base;
+        const h1 = `# ${title}`;
+
+        if (els.optimizeMd.checked) {
+          // Normalizações leves e promoção de seções
+          let md = content;
+          md = normalizeBullets(md);
+          md = promoteSectionHeadings(md);
+
+          // Front-matter
+          const docId = slugify(base);
+          const tags = detectTagsFromName(base);
+          const yaml = addFrontMatter({docId, title, source:file.name, tags});
+
+          content = `${yaml}${h1}\n\n${md}`;
+        } else {
+          // Comportamento antigo: somente H1 no topo
+          content = `${h1}\n\n${content}`;
+        }
+
+        const len = content.length; 
+        charTotal += len;
+        docs.push({ name:file.name, content, len });
+      }catch(e){ errors.push(`${file.name}: ${e.message}`); }
+      processed++;
+      if (processed % 10 === 0 || processed === selectedFiles.length) {
+  const pctRead = Math.round((processed / selectedFiles.length) * 70); // 0–70%
+  els.progress.style.width = pctRead + '%';
+  els.status.textContent = `Lendo arquivos… (${processed}/${selectedFiles.length})`;
+  await new Promise(r=>setTimeout(r, 0));
+}
+    }
+
+    els.statChars.textContent = String(charTotal);
+    els.statTokens.textContent = String(approxTokens(charTotal));
+
+    if(els.preserveOrder.checked){
+      docs.sort((a,b)=> cmpByVersionedName(a.name, b.name));
+    }
+
+    // ========== NOVO MODO: INDIVIDUAL (.txt para cada arquivo) ==========
+    if (individual) {
+      els.status.textContent = 'Gerando arquivos individuais…';
+      els.progress.style.width = '85%';
+
+      els.downloads.innerHTML = '';
+      let firstPreview = '';
+      const ext = 'txt'; // fixo conforme solicitado
+
+const baseProgress = 70;
+docs.forEach((d, i) => {
+  const text = d.content;
+  const fname = `${baseName(d.name)}.${ext}`;
+  createDownloadLink(fname, text);
+
+  // progresso 70–100% conforme gera cada arquivo
+  const pct = baseProgress + Math.round(((i+1) / docs.length) * 30);
+  els.progress.style.width = pct + '%';
+
+  if (i===0) {
+    firstPreview = text.slice(0, 3000) + (text.length>3000 ? '\n… (cortado)' : '');
+  }
+});
+
+      els.btnDownloadAll.disabled = generatedPacksData.length === 0;
+      els.preview.textContent = firstPreview || '(vazio)';
+      els.progress.style.width = '100%';
+      els.status.textContent = `Pronto! ${docs.length} arquivos convertidos.`;
+
+      if(errors.length){
+        const pre = document.createElement('pre');
+        pre.textContent = 'Arquivos com erro (considere converter .DOC para .DOCX/PDF):\n' + errors.join('\n');
+        els.downloads.appendChild(pre);
+      }
+      return; // encerra aqui no modo individual
+    }
+
+    // ========== MODO ORIGINAL: PACKS ==========
+    els.status.textContent = 'Distribuindo documentos…';
+    els.progress.style.width = '70%';
+
+    const packs = assignDocsToPacksSequential(docs, k);
+
+    els.downloads.innerHTML = '';
+    const forceMd = els.optimizeMd.checked;
+    const ext = forceMd ? 'md' : els.ext.value;
+    const sep = forceMd ? '\n\n---\n\n' : getSeparator();
+
+    let firstPreview = '';
+
+const baseProgress = 70;
+packs.forEach((pk, i) => {
+  const header = `<!-- Pack ${String(i+1).padStart(2,'0')} | arquivos: ${pk.docs.length} | chars: ${pk.len} | tokens≈${approxTokens(pk.len)} -->\n\n`;
+  const text = header + pk.docs.map(d=>d.content).join(sep);
+  const fname = `base_de_dados_${String(i+1).padStart(2,'0')}.${ext}`;
+  createDownloadLink(fname, text);
+
+  // progresso 70–100% conforme gera cada pack
+  const pct = baseProgress + Math.round(((i+1) / packs.length) * 30);
+  els.progress.style.width = pct + '%';
+
+  if(i===0){
+    firstPreview = text.slice(0, 3000) + (text.length>3000 ? '\n… (cortado)' : '');
+  }
+});
+
+    els.btnDownloadAll.disabled = generatedPacksData.length === 0;
+    els.preview.textContent = firstPreview || '(vazio)';
+    els.progress.style.width = '100%';
+    els.status.textContent = `Pronto! ${packs.length} packs gerados.`;
+
+    if(errors.length){
+      const pre = document.createElement('pre');
+      pre.textContent = 'Arquivos com erro (considere converter .DOC para .DOCX/PDF):\n' + errors.join('\n');
+      els.downloads.appendChild(pre);
+    }
+  });
+  </script>
+</body>
+</html>
