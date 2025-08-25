@@ -69,6 +69,57 @@ header .note{
 
     .muted { color:var(--muted); font-size:12px; }
     .dim { opacity:.6; pointer-events:none; filter:saturate(.7); }
+	/* ——— App Switcher: botão + menu dropdown ——— */
+.app-switcher {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  z-index: 1000;
+}
+.app-switcher__btn {
+  border: 1px solid var(--border, rgba(255,255,255,.15));
+  background: linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+  color: var(--fg, #e5e7eb);
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  letter-spacing: .2px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0,0,0,.25);
+  backdrop-filter: blur(6px);
+}
+.app-switcher__btn:hover { transform: translateY(-1px); }
+.app-switcher__menu {
+  position: absolute;
+  right: 0;
+  margin-top: 8px;
+  min-width: 260px;
+  padding: 8px;
+  border-radius: 14px;
+  border: 1px solid var(--border, rgba(255,255,255,.12));
+  background: linear-gradient(180deg, rgba(15,23,42,.98), rgba(15,23,42,.95));
+  box-shadow: 0 20px 40px rgba(0,0,0,.35);
+  display: none;
+}
+.app-switcher.open .app-switcher__menu { display: block; }
+
+.app-switcher__item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 10px; border-radius: 10px; text-decoration: none;
+  color: var(--fg, #e5e7eb);
+  border: 1px solid transparent;
+}
+.app-switcher__item small { color: var(--muted, #9aa4b2); display:block; margin-top:2px }
+.app-switcher__item:hover {
+  background: rgba(255,255,255,.04);
+  border-color: rgba(255,255,255,.08);
+}
+
+/* Se esse app tiver “Modo Foco” com botão fixo no canto direito, dá espaço */
+body.focus-mode .app-switcher { right: 160px; }
+
+/* Header compat: se não for position:relative, fazemos aqui */
+header { position: relative; }
   </style>
 
   <!-- PDF e DOCX -->
@@ -78,7 +129,24 @@ header .note{
 </head>
 <body>
   <header>
-    <h1>HDSP Pack Pro V1.5</h1>
+    <h1>HDSP Pack Pro V1.6</h1>
+	<nav class="app-switcher" aria-label="Outros aplicativos">
+  <button id="appSwitcherBtn" class="app-switcher__btn" type="button">HDSP CORP ▾</button>
+  <div id="appSwitcherMenu" class="app-switcher__menu" role="menu">
+    <a class="app-switcher__item" role="menuitem" href="https://hdspcorp.github.io/curadoriapro10/" target="_blank" rel="noopener">
+      <div>
+        <strong>Curadoria-Pro</strong>
+        <small>Importa JSON e envia os grupos para avaliação</small>
+      </div>
+    </a>
+    <a class="app-switcher__item" role="menuitem" href="https://hdspcorp.github.io/poscuradoria/" target="_blank" rel="noopener">
+      <div>
+        <strong>Curadoria-Pós</strong>
+        <small>Visualiza, e filtra as avaliações do agente de Curadoria</small>
+      </div>
+    </a>
+  </div>
+</nav>
 	<span class="note"><b>Dica Importante galera:</b> no Chrome/Edge, se vocês clicarem em Baixar Todos, ele pergunta qual pasta vocês desejam salvar. (Humberto) </span>
   </header>
 
@@ -684,5 +752,27 @@ packs.forEach((pk, i) => {
     }
   });
   </script>
+  <script>
+(function(){
+  const wrap  = document.querySelector('.app-switcher');
+  const btn   = document.getElementById('appSwitcherBtn');
+  const menu  = document.getElementById('appSwitcherMenu');
+
+  if (!wrap || !btn || !menu) return;
+
+  function toggle(open){
+    wrap.classList.toggle('open', open ?? !wrap.classList.contains('open'));
+  }
+
+  btn.addEventListener('click', (e)=>{ e.stopPropagation(); toggle(); });
+
+  document.addEventListener('click', (e)=>{
+    if (!wrap.contains(e.target)) toggle(false);
+  });
+  document.addEventListener('keydown', (e)=>{
+    if (e.key === 'Escape') toggle(false);
+  });
+})();
+</script>
 </body>
 </html>
